@@ -12,5 +12,61 @@
 
 
 #define macro MAIN() = takes(0) returns(0) {
+    0x00 calldataload 0xe0 shr
+
+    dup1 __FUNC_SIG(sumArray) eq sumArray jumpi
+
+    0x00 0x00 revert
+
+    sumArray:
+        sumArray()
+
+}
+
+#define macro sumArray() = takes(0) returns(0){
+
+
+    0x24 calldataload //[length]
+    0x20 //(length * 32) + 24 will be the offset for the last number
+    mul
+    0x24 add //offSet for last position = tail
+            //in the loop we will check that the position we have to read next isnt over the tail
+    0x00 //total t [t, tail]
+    0x44 //position being calldataloaded relative to the number of iterations = #n [#n, t, tail]
+    doWhileLoop jump
+
+        //entering do while order [#n, t, tail]
+    doWhileLoop:
+        dup1 //[#n, #n, t, tail]
+        calldataload //[number to add to total, #n, t, tail]
+        swap1 //[ #n, number to add to total, t , tail]
+        swap2 //[t , number to add to total, #n , tail]
+        add   //[added total, #n, tail]
+        swap2 //[ tail, n# , added total]
+        swap1 //[  n#, tail , added total]
+        0x20 add // [offset of next calldata, tail, added total]
+        dup1 // [offset of next calldata, offset of next calldata, tail, added total]
+        swap2 //  [tail, offset of next calldata, offset of next calldata, added total]
+        dup1 // [tail, tail, offset of next calldata, offset of next calldata, added total] mejorable?
+        swap2 // [offset of next calldata, tail, tail, offset of next calldata, added total]
+        gt finishExecution jumpi // [tail, offset of next calldata, added total]
+        swap2 //[t, #n, tail]
+        swap1 //[#n, t, tail]
+        doWhileLoop jump //repeat
+
+        finishExecution:
+        //entering finishExecution [tail, offset of next calldata, added total]
+        pop pop // [addedTotal]
+
+        0x00 mstore
+
+        0x20 0x00 return
+
+
+
+
+        
+
+    
 
 }

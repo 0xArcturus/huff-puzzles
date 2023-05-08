@@ -9,5 +9,11 @@
  */
 
 #define macro MAIN() = takes(0) returns(0) {
+    callvalue iszero successPath jumpi
+    0x00 0x00 revert
+
+    successPath:
+        0x20 0x00 return 
+
 
 }

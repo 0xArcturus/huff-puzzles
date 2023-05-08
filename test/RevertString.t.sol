@@ -21,6 +21,8 @@ contract RevertStringTest is Test {
             ""
         );
         require(!success, "call expected to fail");
+        console.logBytes(revertData);
+        console.logBytes(abi.decode(revertData, (bytes)));
         assertEq(
             keccak256(bytes("Only Huff")),
             keccak256(abi.decode(revertData, (bytes))),

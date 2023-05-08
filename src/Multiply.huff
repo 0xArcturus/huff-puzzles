@@ -13,5 +13,50 @@
 
 
 #define macro MAIN() = takes(0) returns(0) {
+    0x00 calldataload 0xe0 shr
+
+    __FUNC_SIG(multiply) eq multiplyJump jumpi
+
+    0x00 0x00 revert
+
+    multiplyJump:
+                                        //get first argument and check its not zero, duplicate arg1 for overflowcheck
+        0x04 calldataload               //[arg1] 
+        dup1                            //[arg1, arg1]        
+        dup1 iszero zeroInput jumpi    
+
+        0x24 calldataload               //get second argument and check its not zero, duplicate arg2 for future overflowcheck
+        dup1        
+        dup1 iszero zeroInput jumpi    //[arg2, arg2, arg1, arg1]
+        swap2                             //[arg1, arg2, arg2, arg1]  
+        
+        mul                             //[multiplication, arg2, arg1]
+
+                                        //having the multiplication, we have to check that dividing it by arg1 the result is arg2
+      
+                                        //rearange stack for division
+        dup1                            //[multiplication, multiplication, arg2,  arg1]
+        swap3                           //[arg1, multiplication, arg2, multiplication]
+        swap1                           //[multiplication, arg1,  art2 , multiplication]
+
+                                        //stack aranged for division and eq comparison with the result of the div and arg2
+        div                             //[division, arg2, multiplication]
+                                         
+        eq correctPath jumpi            //[1, multiplication] 
+        0x00 0x00 revert                //in case the division by arg1 of the multiplication doesnt result in the arg2, we revert
+            
+
+        zeroInput:
+            //if any input is zero, we can be sure that the result of the multiplication is going to be 0
+            //therefore we save 0 as the result and continue with execution  
+            0x00
+        correctPath:
+            0x00 mstore
+            0x20 0x00 return
+
+        
+
+        
+       
 
 }

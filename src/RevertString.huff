@@ -13,5 +13,19 @@
 
 
 #define macro MAIN() = takes(0) returns(0) {
+    //https://docs.soliditylang.org/en/v0.8.19/abi-spec.html
+    0x20    //offset                                 
+    0x00                                    
+    mstore                                  
+
+    // store string length of the string "Only Huff" in bytes 0x4f6e6c792048756666, which is 0x09 bytes
+    0x09                                     
+    0x20                                     
+    mstore                                   
+
+    0x4f6e6c7920487566660000000000000000000000000000000000000000000000
+    0x40 mstore
+
+    0x60 0x00 revert
     
 }

@@ -21,6 +21,7 @@ contract CalldataLengthTest is Test {
             data
         );
         require(success, "call failed");
+        console2.log(abi.decode(retdata, (uint256)));
         assertEq(
             abi.decode(retdata, (uint256)),
             data.length,
