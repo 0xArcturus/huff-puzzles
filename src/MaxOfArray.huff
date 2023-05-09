@@ -1,4 +1,3 @@
-
 /** 
  *  MAX_OF_ARRAY HUFF EXERCISE
  *  
@@ -10,5 +9,80 @@
 #define function maxOfArray(uint256[]) payable returns(uint256)
 
 #define macro MAIN() = takes(0) returns(0) {
-   
+    0x00 calldataload 0xe0 shr
+
+    dup1 __FUNC_SIG(maxOfArray) eq maxOfArrayPath jumpi
+
+    revertJump:
+     0x00 0x00 revert
+
+    maxOfArrayPath:
+        //check that the length isnt 0
+        0x24 calldataload 
+        dup1
+        iszero revertJump jumpi
+
+        //Preparation of the stack for do while loop
+        //We calculate the offset of the last number in the loop
+        //Calldata has in position 0x00 4 bytes of selector
+        //in position 0x04 the offset of the array
+        //in position 0x24 the length of the array
+        //in position 0x44 the first item in the array
+        
+        //To calculate the position of the last item we multiply 32 by the length and add it to the initial part of the stack 32 + 4
+        0x20 //(length * 32) + 32 + 4selectorBytes 
+        mul
+        0x24 add //offSet for last position = tail
+    
+            //in the loop we will check that the position we have to read next isnt over the tail
+        0x00 //accumulated largest number =  t [t, tail]
+        0x44 //position being calldataloaded relative to the number of iterations = #n [#n, t, tail]
+        //we start with 0x44 since its the position of the first item of the array in calldata
+        doWhileLoop jump
+
+
+
+    //entering do while order [#n, t, tail]
+    doWhileLoop:
+        //firstly we calldataload the number in the "i" position and we add it to the total
+        dup1 //[#n, #n, t, tail]
+       
+        calldataload //[calldataloadedval, #n, t, tail]
+
+        
+        dup3 //[t, calldataloadedval, #n, t, tail]
+        dup2 //[calldataloadedval, t, calldataloadedval, #n, t, tail]
+        //calldataloaded value > stored t value?
+        gt newValBigger jumpi //[calldataloadedval,#n, t, tail]
+        //The newValBigger path of execution just swaps t with the calldataloaded value, and returns to this place to pop the previous t value
+        returnToLoop:
+        pop //[#n, t, tail]
+        //secondly we calculate "i++" adding 20 bytes to the previous position
+        0x20 add // [offset of next calldata, t, tail]
+
+        //lastly we calculate if "i++" is greater than the length, by comparing to the offset of the last position
+        dup3 //[tail, offset of next calldata, t, tail]
+        dup2 // [offset of next calldata, tail, offset of next calldata, t, tail]
+        //offset of next calldata > tail position?
+        gt finishExecution jumpi //[#n, t, tail]
+
+        //if the we haven't gone through the whole array, order the stack so that it can go through the loop once again
+        doWhileLoop jump 
+
+
+        //[calldataloadedval,#n, t, tail]
+        //the difference is that if the new value is bigger, we replace the old t with the new calldataloaded value and pop the old t instead
+        newValBigger:
+        swap2 //[t, #n,calldataloadedval, tail]
+        returnToLoop jump 
+        
+
+
+
+        finishExecution:
+        //entering finishExecution [#n, t, tail]
+        pop //[t, tail]
+        0x00 mstore
+
+        0x20 0x00 return
 }

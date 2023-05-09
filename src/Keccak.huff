@@ -9,5 +9,20 @@
 
 
  #define macro MAIN() = takes(0) returns(0) {
+
+    //we store the calldata in memory in order
+    0x00 calldataload
+    0x00 mstore
+    0x20 calldataload
+    0x20 mstore
+    0x40 calldataload
+    0x40 mstore
+    //we then compute the keccak of the 0x60 bytes we stored in memory
+    0x60 0x00 sha3
+
+    
+    
+    0x00 mstore
+    0x20 0x00 return
     
  }

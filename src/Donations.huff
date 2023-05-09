@@ -5,8 +5,63 @@
  *  also have a getter function that returns how much an address has donated. Addresses can donate several times
  */
 
+
 #define function donated(address) payable returns(uint256)
 
 #define macro MAIN() = takes(0) returns(0) {
+    0x00 calldataload 0xe0 shr
+    __FUNC_SIG(donated) eq donatedGetter jumpi
+
+    //recieve path
+
+    //if callvalue is zero skip all execution
+    //to calculate the storage slot to save to we create a mapping manually, where we hash the address value, which will be our key 
+    callvalue iszero returnPath jumpi
+    caller 0x00 mstore //[caller]  memory:{calleraddress}
+    0x20 //[size]
+    0x00 //[memoryoffset, size]
+    sha3 // [hash]
+    
+    dup1 // [hash, hash]
+    sload // [balance, hash]
+    
+    
+    
+    dup1// [balance, balance, hash]
+   
+    
+    iszero noAddPath jumpi //[balance, hash]
+
+
+    callvalue // [callvalue, balance, hash]
+    add   // [newBalance, hash]
+    swap1 // [hash, newBalance]
+
+    storePath:
+    sstore
+    0x00 0x00 return
+
+    //executed if didnt have previous balance
+    noAddPath:
+        pop //[ hash]
+        callvalue //[callvalue, hash]
+        swap1 // [hash, callvalue]
+        storePath jump
+
+
+    donatedGetter:
+
+    caller 0x00 mstore //[]  memory:{calleraddress}
+    0x20 //[size]
+    0x00 //[memoryoffset, size]
+    sha3 // [hash] memory:{}
+    sload// [balance]
+
+
+    0x00 mstore
+    0x20 0x00 return
+
+    returnPath:
+        0x00 0x00 return
     
 }

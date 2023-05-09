@@ -13,5 +13,22 @@
 
 
  #define macro MAIN() = takes(0) returns(0) {
+    0x00 calldataload 0xe0 shr
+    __FUNC_SIG(value) eq valuePath jumpi
+
+    0x00 0x00 revert
+
+    valuePath:
+    //store in memory the second value
+    0x24 calldataload
+    0x00 mstore
+    //push to stack first value
+    0x04 calldataload //[arg1]
+    __EVENT_HASH(Value)//[sig, arg1]
+    //prepare for log
+    0x20
+    0x00 
+    log2 //[ offset in mem, size in mem ,sig, topic1]
+
     
  }
