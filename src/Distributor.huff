@@ -14,5 +14,57 @@
 
 
  #define macro MAIN() = takes(0) returns(0) {
+    0x00 calldataload 0xe0 shr
+    __FUNC_SIG(distribute) eq distributePath jumpi
+
+    revertPath:
+    0x00 0x00 revert
+
+
+    distributePath:
+    0x24 calldataload dup1 dup1 iszero revertPath jumpi // [length]
+    callvalue dup1 iszero revertPath jumpi //[value, length, length]
+    div //[msg, length]
+    
+    //array length
+    0x44 //starting item in array offset [head, msg, length]
+    0x20 dup4 mul // offset array length[bytelength, head, msg, length]
+    add //offset of tail [tail, msg, length]
+
+    0x44//head [head, tail, msg, length]
+    swap3 pop //[tail, msg, head]
+    swap2 //[head, msg, tail]
+    loopPath jump
+    //do while loop
+
+    loopPath: //[i, msg, tail]
+    //send
+    0x00    //[byte size to copy , i, msg, tail]
+    0x00    //[offset in mem, byte size to copy ,  i, msg, tail]
+    0x00    //[argSize,offset in mem, byte size to copy, i, msg, tail]
+    0x00    //[argOffset, argSize,offset in mem, byte size to copy, i, msg, tail]
+    dup6   // [msg.value, argOffset, argSize,offset in mem, byte size to copy, i, msg, tail]
+    dup6 calldataload // [address[i], msg.value, argOffset, argSize,offset in mem, byte size to copy, i, msg, tail]
+    gas     //[gas to send, address, value to send, argOffset, argSize,offset in mem, byte size to copy, i, msg, tail]
+    call //[success of call, i, msg, tail]
+    iszero revertPath jumpi //[i, msg, tail]
+    //check if it should do another iteration
+    0x20 add //[i+1, msg, tail]
+    dup3 dup2 //[i+1, tail, i+1, msg, tail]
+    //if the next offset is over the tail offset finish execution
+    eq finishExecution jumpi// [i+1, msg, tail]
+   
+    
+    loopPath jump
+
+    finishExecution:
+    0x00 0x00 return
+
+
+
+
+    
+
+
    
  }

@@ -18,6 +18,17 @@
     0x00 0x00 revert
 
     sendEtherPath:
+        0x00    //[byte size to copy] 
+        0x00    //[offset in mem, byte size to copy] 
+        0x00    //[argSize,offset in mem, byte size to copy] 
+        0x00    //[argOffset, argSize,offset in mem, byte size to copy] 
+        callvalue //[value to send, argOffset, argSize,offset in mem, byte size to copy]        
+        0x04 calldataload //[address, value to send, argOffset, argSize,offset in mem, byte size to copy]  
+        gas     //[gas to send, address, value to send, argOffset, argSize,offset in mem, byte size to copy]
+        call
+        0x00 mstore
+        0x20 0x00 return
+
     
 
 
