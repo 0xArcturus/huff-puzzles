@@ -25,5 +25,104 @@
  #define error ZeroArray()
 
  #define macro MAIN() = takes(0) returns(0) {
+    0x00 calldataload 0xe0 shr
+
+    dup1 __FUNC_SIG(pushh) eq pushJump jumpi
+    dup1 __FUNC_SIG(popp) eq poppJump jumpi
+    dup1 __FUNC_SIG(read) eq readJump jumpi
+    dup1 __FUNC_SIG(length) eq lengthJump jumpi
+    dup1 __FUNC_SIG(write) eq writeJump jumpi
+
+    0x00 0x00 revert
+
+
+    pushJump:
+    //add 1 to length   
+    0x00 sload //[previousLength]
+    dup1
+    0x01 add   //[length++, previousLength]
+    0x00 sstore //[previousLength] and new length is stored in slot 0
+
+    //if length is 0, the new item is at position in storage keccak256(0), meaning we dont have to add anything to the hash
+    //if length is 1, the new item will be at position storage keccack256(0)+1
+    //we will therefore always push an item in position keccack256(0)+previouslength
+
+    0x00 0x00 mstore
+    0x01 0x00 sha3  // [ hash, previousLength]
+    add //[destinationPosition]
+
+    0x04 calldataload //[intToPush, destinationPosition]
+    swap1 sstore
+    0x00 0x00 return
+
+    poppJump:
+
+    //sub 1 to length   
+    0x00 sload //[previousLength]
+    dup1
+    dup1 iszero zeroArrayJump jumpi
+    0x01 swap1 sub  //[length--, previousLength]
+    0x00 sstore //[previousLength] and new length is stored in slot 0
+
+    
+    //if length was 1, the item we want to pop will be at position storage keccack256(0)
+    //the item we will pop will always be in position position keccack256(0)+previouslength-1
+
+    0x00 0x00 mstore
+    0x01 0x00 sha3  // [ hash, previousLength]
+    add //[destinationPosition+1]
+    0x01 swap1 sub //[destinationPosition]
+
+    0x00//[0x00, destinationPosition]
+    swap1 sstore
+    0x00 0x00 return
+
+    
+
+    readJump:
+
+    0x04 calldataload //[readIndex]
+    
+    0x00 sload//[length,readIndex]
+    dup1 iszero outOfBoundsJump jumpi
+    dup2  //[readIndex, length, readIndex]
+    0x01 add  //[ readIndex+1, length,  readIndex]
+    gt outOfBoundsJump jumpi//[readIndex]
+    0x00 0x00 mstore
+    0x01 0x00 sha3  // [ hash, readIndex]
+    add //[destinationPosition]
+    sload
+    0x00 mstore
+    0x20 0x00 return
+
+    lengthJump:
+    0x00 sload
+    0x00 mstore
+    0x20 0x00 return
+
+    writeJump:
+    0x04 calldataload //[Index]
+    0x00 sload//[length,Index]
+    dup1 iszero outOfBoundsJump jumpi
+    dup2 0x01 add//[index+1, length, index] if index+1 is over the length revert, example: index 1 for length 1 will revert, since the only index there sould be is 0
+    gt outOfBoundsJump jumpi//[Index]
+    0x00 0x00 mstore
+    0x01 0x00 sha3  // [ hash, Index]
+    add //[destinationPosition]
+
+    0x24 calldataload //[num, destinationPosition]
+    swap1 sstore
+    0x00 0x00 return
+
+    zeroArrayJump:
+    __ERROR(ZeroArray) 0x00 mstore
+    0x04 0x00 revert
+
+    outOfBoundsJump:
+    __ERROR(OutOfBounds) 0x00 mstore
+    0x04 0x00 revert
+
+
+
     
  }
